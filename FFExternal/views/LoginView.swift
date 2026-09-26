@@ -1,5 +1,11 @@
 import SwiftUI
 
+// MARK: - Support model
+struct IOSSupportStatus {
+    let version: String
+    let isSupported: Bool
+}
+
 struct LoginView: View {
     @Environment(\.ffLanguage) private var lang
     @State private var keyInput:   String  = ""
@@ -14,10 +20,7 @@ struct LoginView: View {
         return IOSSupportStatus(
             version: AppInfo.osVersion,
             isSupported: ExploitSupportPolicy.isSupported(
-                major: v.major, minor: v.minor, patch: v.patch,
-                build: AppInfo.osBuild
-            )
-        )
+                major: v.major, minor: v.minor, patch: v.patch, build: AppInfo.osBuild))
     }
 
     var body: some View {
@@ -26,7 +29,8 @@ struct LoginView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     Spacer(minLength: 60)
-                    // App Name
+
+                    // Title
                     VStack(spacing: 4) {
                         Text("FFEX IOS")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
@@ -36,12 +40,14 @@ struct LoginView: View {
                             .foregroundStyle(Color.secondary)
                     }
                     .padding(.bottom, 36)
-                    // Key Input Card
+
+                    // Key Input
                     VStack(alignment: .leading, spacing: 12) {
                         Text(lang.t("key_label").uppercased())
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Color.secondary)
                             .tracking(1.2)
+
                         HStack(spacing: 10) {
                             Image(systemName: "key.fill")
                                 .font(.system(size: 14))
@@ -63,12 +69,12 @@ struct LoginView: View {
                                 .strokeBorder(
                                     error != nil ? FFTheme.danger.opacity(0.5) :
                                     (!keyInput.isEmpty ? Color.primary.opacity(0.2) : FFTheme.glassBorder),
-                                    lineWidth: 1
-                                )
-                        )
+                                    lineWidth: 1))
+
                         if let error {
                             HStack(spacing: 6) {
-                                Image(systemName: "exclamationmark.circle.fill").font(.system(size: 12))
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(.system(size: 12))
                                 Text(error).font(.system(size: 12, weight: .medium))
                             }
                             .foregroundStyle(FFTheme.danger)
@@ -77,10 +83,12 @@ struct LoginView: View {
                     .padding(16)
                     .background(FFTheme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
                     .padding(.horizontal, 20)
                     .padding(.bottom, 16)
-                    // Device Info Card
+
+                    // Device Info
                     VStack(spacing: 0) {
                         deviceRow(label: "IOS VERSION", value: DeviceID.iOSVersion)
                         Divider().padding(.leading, 16)
@@ -90,19 +98,34 @@ struct LoginView: View {
                     }
                     .background(FFTheme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
                     .padding(.horizontal, 20)
                     .padding(.bottom, 24)
-                    // Validate Button
-                    Button { if !supportStatus.isSupported { showUnsupportedAlert = true } else { Task { await validate() } } } label: {
+
+                    // Button
+                    Button {
+                        if !supportStatus.isSupported {
+                            showUnsupportedAlert = true
+                        } else {
+                            Task { await validate() }
+                        }
+                    } label: {
                         HStack(spacing: 8) {
-                            if validating { ProgressView().progressViewStyle(.circular).scaleEffect(0.8).tint(Color(UIColor.systemBackground)) }
+                            if validating {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .scaleEffect(0.8)
+                                    .tint(Color(UIColor.systemBackground))
+                            }
                             Text(validating ? lang.t("validating") : lang.t("validate"))
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(Color(UIColor.systemBackground))
                         }
                         .frame(maxWidth: .infinity).frame(height: 50)
-                        .background(keyInput.isEmpty || validating ? Color.primary.opacity(0.3) : Color.primary)
+                        .background(
+                            keyInput.isEmpty || validating
+                                ? Color.primary.opacity(0.3) : Color.primary)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .disabled(keyInput.trimmingCharacters(in: .whitespaces).isEmpty || validating)
@@ -118,21 +141,27 @@ struct LoginView: View {
         }
     }
 
-    @ViewBuilder private func deviceRow(label: String, value: String) -> some View {
+    @ViewBuilder
+    private func deviceRow(label: String, value: String) -> some View {
         HStack {
             Text(label).font(.system(size: 13)).foregroundStyle(Color.secondary)
             Spacer()
-            Text(value).font(.system(size: 13, weight: .medium, design: .monospaced)).foregroundStyle(Color.primary)
+            Text(value)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(Color.primary)
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
     }
 
-    @ViewBuilder private func deviceRowBadge(isSupported: Bool) -> some View {
+    @ViewBuilder
+    private func deviceRowBadge(isSupported: Bool) -> some View {
         HStack {
             Text("SUPPORTED").font(.system(size: 13)).foregroundStyle(Color.secondary)
             Spacer()
             HStack(spacing: 5) {
-                Circle().fill(isSupported ? FFTheme.success : FFTheme.danger).frame(width: 8, height: 8)
+                Circle()
+                    .fill(isSupported ? FFTheme.success : FFTheme.danger)
+                    .frame(width: 8, height: 8)
                 Text(isSupported ? "VERIFIED" : "NOT SUPPORTED")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(isSupported ? FFTheme.success : FFTheme.danger)
