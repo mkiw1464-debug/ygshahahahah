@@ -14,7 +14,8 @@ class FFAppState: ObservableObject {
 
     func boot() {
         let v = AppInfo.versionTuple
-        let supported = ExploitSupportPolicy.isSupported(major: v.major, minor: v.minor, patch: v.patch, build: AppInfo.osBuild)
+        let supported = ExploitSupportPolicy.isSupported(
+            major: v.major, minor: v.minor, patch: v.patch, build: AppInfo.osBuild)
         if !supported { exploitStatus = .unsupported("iOS \(AppInfo.osVersion)"); return }
         if KernelExploit.requiresSandboxEscape && KernelExploit.hasSandboxAccess() {
             exploitStatus = .success(method: "kexploit"); return
@@ -35,10 +36,9 @@ class FFAppState: ObservableObject {
     }
 }
 
-// MARK: - Main Menu Router (LITE vs PRO)
+// MARK: - Main Menu Router
 
 struct MainMenuView: View {
-    @Environment(\.ffLanguage) private var lang
     @StateObject private var appState = FFAppState()
 
     let licenseInfo: LicenseInfo
@@ -49,9 +49,9 @@ struct MainMenuView: View {
     var body: some View {
         Group {
             if keyType == .pro {
-                ProMenuView(licenseInfo: licenseInfo, appState: appState, onLogout: onLogout)
+                ProMenuView(appState: appState, licenseInfo: licenseInfo, onLogout: onLogout)
             } else {
-                LiteMenuView(licenseInfo: licenseInfo, appState: appState, onLogout: onLogout)
+                LiteMenuView(appState: appState, licenseInfo: licenseInfo, onLogout: onLogout)
             }
         }
         .onAppear { appState.boot() }
