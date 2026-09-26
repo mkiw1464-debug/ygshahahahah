@@ -57,33 +57,35 @@ struct ProMenuView: View {
     }
 
     private var infoCard: some View {
-        HStack(spacing: 0) {
-            infoItem(title: "DEVICE", value: DeviceID.iPhoneModel)
-            Divider().frame(height: 30)
-            infoItem(title: "IOS", value: DeviceID.iOSVersion)
-            Divider().frame(height: 30)
-            infoItem(title: "KEY", value: LicenseService.maskedKey(licenseInfo.key))
+        VStack(spacing: 0) {
+            infoRow(label: "DEVICE", value: DeviceID.iPhoneModel)
+            Divider().padding(.leading, 16)
+            infoRow(label: "IOS VERSION", value: DeviceID.iOSVersion)
+            Divider().padding(.leading, 16)
+            infoRow(label: "KEY", value: LicenseService.maskedKey(licenseInfo.key))
+            Divider().padding(.leading, 16)
+            infoRow(label: "EXPIRES", value: countdown.isEmpty ? "—" : countdown)
         }
-        .padding(.vertical, 12)
         .background(FFTheme.card)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
             .strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
     }
 
-    private func infoItem(title: String, value: String) -> some View {
-        VStack(spacing: 3) {
-            Text(title)
-                .font(.system(size: 10, weight: .semibold))
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Color.secondary)
-                .tracking(0.8)
+                .tracking(0.5)
+            Spacer()
             Text(value)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .foregroundStyle(Color.primary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.75)
         }
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16).padding(.vertical, 12)
     }
 
     private var statusBar: some View {
