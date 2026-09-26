@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Pro Status (hardcoded, no network)
+// MARK: - Pro Status (hardcoded)
 
 struct ProCheatStatus {
     var status:       String
@@ -9,12 +9,15 @@ struct ProCheatStatus {
     var isOnline:      Bool { status.uppercased() == "SAFE" }
     var isMaintenance: Bool { status.uppercased() == "MAINTENANCE" }
 
+    static var placeholder: ProCheatStatus {
+        ProCheatStatus(status: "SAFE", buildVersion: "1.1.0")
+    }
+
     static var current: ProCheatStatus {
         ProCheatStatus(status: "SAFE", buildVersion: "1.1.0")
     }
 }
 
-// Async wrapper for compatibility with existing call sites
 enum ProStatusService {
     static func fetchStatus() async throws -> ProCheatStatus {
         return ProCheatStatus.current
