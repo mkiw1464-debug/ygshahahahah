@@ -17,6 +17,7 @@ struct LiteMenuView: View {
         ZStack {
             FFBackground()
             VStack(spacing: 0) {
+
                 // Top bar
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -30,21 +31,15 @@ struct LiteMenuView: View {
                     Spacer()
                     HStack(spacing: 14) {
                         Button { showLanguagePicker = true } label: {
-                            Image(systemName: "globe")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color.secondary)
+                            Image(systemName: "globe").font(.system(size: 16)).foregroundStyle(Color.secondary)
                         }
-                        Button {
-                            storedScheme = storedScheme == "dark" ? "light" : "dark"
-                        } label: {
+                        Button { storedScheme = storedScheme == "dark" ? "light" : "dark" } label: {
                             Image(systemName: storedScheme == "dark" ? "sun.max.fill" : "moon.fill")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color.secondary)
+                                .font(.system(size: 16)).foregroundStyle(Color.secondary)
                         }
                         Button { showLogoutConfirm = true } label: {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Color.secondary)
+                                .font(.system(size: 16)).foregroundStyle(Color.secondary)
                         }
                     }
                 }
@@ -52,21 +47,24 @@ struct LiteMenuView: View {
                 .padding(.top, 12)
                 .padding(.bottom, 10)
 
-                // Info pills
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        infoPill(icon: "iphone", text: DeviceID.iPhoneModel)
-                        infoPill(icon: "apple.logo", text: "iOS \(DeviceID.iOSVersion)")
-                        infoPill(icon: "key.fill", text: LicenseService.maskedKey(licenseInfo.key))
-                        if !countdown.isEmpty {
-                            infoPill(icon: "clock", text: countdown)
-                        }
-                    }
-                    .padding(.horizontal, 20)
+                // Info card -- satu kotak, semua dalam tu
+                VStack(spacing: 0) {
+                    infoRow(label: "DEVICE", value: DeviceID.iPhoneModel)
+                    Divider().padding(.leading, 16)
+                    infoRow(label: "IOS VERSION", value: DeviceID.iOSVersion)
+                    Divider().padding(.leading, 16)
+                    infoRow(label: "KEY", value: LicenseService.maskedKey(licenseInfo.key))
+                    Divider().padding(.leading, 16)
+                    infoRow(label: "EXPIRES", value: countdown.isEmpty ? "—" : countdown)
                 }
+                .background(FFTheme.card)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
+                .padding(.horizontal, 20)
                 .padding(.bottom, 10)
 
-                // Status
+                // Status bar
                 HStack(spacing: 8) {
                     Circle()
                         .fill(cheatStatus.isOperational ? FFTheme.success : FFTheme.danger)
@@ -76,8 +74,7 @@ struct LiteMenuView: View {
                         .foregroundStyle(cheatStatus.isOperational ? FFTheme.success : FFTheme.danger)
                     Spacer()
                     Text("CHEAT STATUS")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Color.secondary)
+                        .font(.system(size: 11)).foregroundStyle(Color.secondary)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .background(FFTheme.card)
@@ -87,7 +84,7 @@ struct LiteMenuView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 12)
 
-                // Game inject tab
+                // Content
                 LiteGameTabView(appState: appState, cheatStatus: cheatStatus)
             }
         }
@@ -106,17 +103,20 @@ struct LiteMenuView: View {
     }
 
     @ViewBuilder
-    private func infoPill(icon: String, text: String) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(Color.secondary)
-            Text(text)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.secondary)
+                .tracking(0.5)
+            Spacer()
+            Text(value)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .foregroundStyle(Color.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
-        .padding(.horizontal, 10).padding(.vertical, 6)
-        .background(FFTheme.card)
-        .clipShape(Capsule())
-        .overlay(Capsule().strokeBorder(FFTheme.glassBorder, lineWidth: 0.8))
+        .padding(.horizontal, 16).padding(.vertical, 12)
     }
 
     private func startCountdown() {
@@ -134,7 +134,7 @@ struct LiteMenuView: View {
     }
 }
 
-// MARK: - Lite Game Tab
+// MARK: - Lite Game Tab (Inject + Restore only, no Open Game)
 
 struct LiteGameTabView: View {
     @ObservedObject var appState: FFAppState
@@ -143,21 +143,21 @@ struct LiteGameTabView: View {
     @State private var selectedGame: FFGame = .freeFire
     @State private var selectedFeature: FFFeature? = nil
     @State private var injecting = false
+    @State private var restoring = false
+    @State private var actionFeature: FFFeature? = nil
     @State private var injectError: String? = nil
+    @State private var successMessage: String? = nil
 
-    private var features: [FFFeature] {
-        FFFeature.allCases.filter { !$0.isHologram }
-    }
+    private var features: [FFFeature] { FFFeature.allCases.filter { !$0.isHologram } }
 
     var body: some View {
         ZStack {
             FFBackground()
             List {
+                // Game picker
                 Section {
                     ForEach(FFGame.allCases, id: \.self) { game in
-                        Button {
-                            selectedGame = game
-                        } label: {
+                        Button { selectedGame = game } label: {
                             HStack {
                                 Image(systemName: "gamecontroller.fill")
                                     .foregroundStyle(selectedGame == game ? Color.primary : Color.secondary)
@@ -166,19 +166,31 @@ struct LiteGameTabView: View {
                                 if selectedGame == game {
                                     Image(systemName: "checkmark")
                                         .font(.system(size: 13, weight: .semibold))
-                                        .foregroundStyle(Color.primary)
+                                        .foregroundStyle(FFTheme.success)
                                 }
                             }
                         }
                     }
                 } header: {
-                    Text("GAME")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.secondary)
+                    Text("GAME").font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.secondary)
                 }
                 .listRowBackground(FFTheme.card)
 
+                // Features -- Inject + Restore buttons
                 Section {
+                    if let msg = successMessage {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(FFTheme.success)
+                            Text(msg).font(.system(size: 12)).foregroundStyle(FFTheme.success)
+                        }
+                    }
+                    if let err = injectError {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.circle.fill").foregroundStyle(FFTheme.danger)
+                            Text(err).font(.system(size: 12)).foregroundStyle(FFTheme.danger)
+                        }
+                    }
+
                     ForEach(features) { feature in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
@@ -189,41 +201,62 @@ struct LiteGameTabView: View {
                                     .foregroundStyle(s == "SAFE" ? FFTheme.success : FFTheme.warn)
                             }
                             Spacer()
-                            if injecting && selectedFeature == feature {
-                                ProgressView().progressViewStyle(.circular).scaleEffect(0.8)
+                            // Restore
+                            Button {
+                                actionFeature = feature
+                                Task { await restoreFeature(feature) }
+                            } label: {
+                                Text("Restore")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(Color.secondary)
+                            }
+                            .disabled(injecting || restoring || !appState.exploitStatus.isSuccess)
+                            .padding(.trailing, 8)
+
+                            // Inject
+                            if injecting && actionFeature == feature {
+                                ProgressView().progressViewStyle(.circular).scaleEffect(0.75)
                             } else {
-                                Button("Inject") {
-                                    selectedFeature = feature
+                                Button {
+                                    actionFeature = feature
                                     Task { await injectFeature(feature) }
+                                } label: {
+                                    Text("Inject")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(Color.primary)
                                 }
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color.primary)
-                                .disabled(injecting || !appState.exploitStatus.isSuccess)
+                                .disabled(injecting || restoring || !appState.exploitStatus.isSuccess)
                             }
                         }
                     }
-                    if let err = injectError {
-                        Text(err).font(.system(size: 12)).foregroundStyle(FFTheme.danger)
-                    }
                 } header: {
-                    Text("FEATURES")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.secondary)
+                    Text("FEATURES").font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.secondary)
                 }
                 .listRowBackground(FFTheme.card)
 
-                Section {
-                    Button {
-                        OpenGameService.openGame(selectedGame, afterDelete: false)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "play.circle.fill")
-                            Text("Open \(selectedGame.displayName)").fontWeight(.semibold)
+                // Exploit status kalau belum ready
+                if !appState.exploitStatus.isSuccess {
+                    Section {
+                        HStack(spacing: 10) {
+                            if appState.exploitRunning {
+                                ProgressView().progressViewStyle(.circular).scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(FFTheme.warn)
+                            }
+                            Text(appState.exploitRunning ? "Initializing..." : "Exploit not ready")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                            if !appState.exploitRunning {
+                                Button("Retry") { appState.runExploit() }
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Color.primary)
+                            }
                         }
-                        .foregroundStyle(Color.primary)
                     }
+                    .listRowBackground(FFTheme.card)
                 }
-                .listRowBackground(FFTheme.card)
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
@@ -231,12 +264,28 @@ struct LiteGameTabView: View {
     }
 
     private func injectFeature(_ feature: FFFeature) async {
-        injecting = true; injectError = nil
+        injecting = true; injectError = nil; successMessage = nil
         do {
             try await FFCheatService.inject(game: selectedGame, feature: feature)
-            await MainActor.run { injecting = false }
+            await MainActor.run {
+                injecting = false
+                successMessage = "\(feature.displayName) injected — restart \(selectedGame.displayName)"
+            }
         } catch {
             await MainActor.run { injecting = false; injectError = error.localizedDescription }
+        }
+    }
+
+    private func restoreFeature(_ feature: FFFeature) async {
+        restoring = true; injectError = nil; successMessage = nil
+        do {
+            try FFCheatService.restoreAim(game: selectedGame)
+            await MainActor.run {
+                restoring = false
+                successMessage = "Restored \(selectedGame.displayName)"
+            }
+        } catch {
+            await MainActor.run { restoring = false; injectError = error.localizedDescription }
         }
     }
 }
