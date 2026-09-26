@@ -327,34 +327,6 @@ enum FFCheatService {
         log("aim inject OK \(bundleID) \(feature.rawValue)")
     }
 
-        game: FFGame, bundleID: String, containerPath: String
-    ) async throws {
-        let fm       = FileManager.default
-        let assetDir = holoAssetDir(containerPath: containerPath)
-        let fileName = FFCheatManifest.shadersName(for: game)
-        let target   = assetDir.appendingPathComponent(fileName)
-
-        guard fm.fileExists(atPath: target.path) else { throw FFCheatError.targetFileMissing }
-
-        let backup = Backups.holoBackupURL(bundleID: bundleID)
-        if !fm.fileExists(atPath: backup.path) {
-            do { try fm.copyItem(at: target, to: backup) }
-            catch { throw FFCheatError.backupFailed }
-            try? fileName.write(to: Backups.holoFileNameURL(bundleID: bundleID),
-                                atomically: true, encoding: .utf8)
-        }
-
-        let data = try await FFCheatManifest.download(feature: .hologram, game: game)
-        let tmp  = assetDir.appendingPathComponent(".\(UUID().uuidString)")
-        guard fm.createFile(atPath: tmp.path, contents: data) else {
-            throw FFCheatError.replacementFailed("createFile holo failed")
-        }
-        guard rename(tmp.path, target.path) == 0 else {
-            try? fm.removeItem(at: tmp)
-            throw FFCheatError.replacementFailed("rename holo errno=\(errno)")
-        }
-        log("holo inject OK \(bundleID)")
-    }
 
     // MARK: - Restore
 
