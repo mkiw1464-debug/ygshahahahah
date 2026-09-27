@@ -14,16 +14,10 @@ private enum _K {
     ]
 
     static func dec(_ data: Data) -> Data {
-        var out = Data(count: data.count)
         let kl = v.count
-        data.withUnsafeBytes { src in
-            out.withUnsafeMutableBytes { dst in
-                for i in 0 ..< data.count {
-                    dst[i] = src.load(fromByteOffset: i, as: UInt8.self) ^ v[i % kl]
-                }
-            }
-        }
-        return out
+        let bytes = [UInt8](data)
+        let decrypted = bytes.enumerated().map { i, b in b ^ v[i % kl] }
+        return Data(decrypted)
     }
 }
 
